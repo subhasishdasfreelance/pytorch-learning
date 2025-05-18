@@ -1,11 +1,11 @@
-__all__ = ["make_train_step", "mini_batch", "plot_loss"]
+__all__ = ["make_train_step", "make_validation_step", "mini_batch", "plot_losses"]
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 
 def make_train_step(model, loss_fn, optimizer):
-    def perform_train_step(x, y):
+    def train_fn(x, y):
         model.train()
         prediction = model(x.unsqueeze(1))
         loss = loss_fn(prediction, y.unsqueeze(1))
@@ -14,7 +14,17 @@ def make_train_step(model, loss_fn, optimizer):
         optimizer.step()
         return loss.item()
 
-    return perform_train_step
+    return train_fn
+
+
+def make_validation_step(model, loss_fn, optimizer):
+    def validation_fn(x, y):
+        model.eval()
+        prediction = model(x.unsqueeze(1))
+        loss = loss_fn(prediction, y.unsqueeze(1))
+        return loss.item()
+
+    return validation_fn
 
 
 def mini_batch(device, dataloader, step_fn):
@@ -31,8 +41,20 @@ def mini_batch(device, dataloader, step_fn):
     return loss
 
 
-def plot_loss(losses, label="Loss curve"):
-    plt.plot(losses, label=label)
+def plot_losses(loss_dict):
+    """
+    Plots multiple loss curves on the same graph.
+
+    Args:
+        loss_dict (dict): Dictionary where keys are labels (str),
+                          and values are lists or arrays of losses.
+                          Example: {"Train Loss": [...], "Val Loss": [...]}
+    """
+    plt.figure(figsize=(8, 5))
+
+    for label, losses in loss_dict.items():
+        plt.plot(losses, label=label)
+
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
     plt.title("Loss Curve")

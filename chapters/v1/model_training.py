@@ -1,4 +1,4 @@
-epochs = 100
+epochs = 20
 losses = []
 
 for epoch in range(epochs):
