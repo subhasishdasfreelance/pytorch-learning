@@ -16,3 +16,7 @@ plot_losses({
   "train loss": train_losses,
   "validation loss": validation_losses
 })
+
+writer = SummaryWriter(log_dir='runs/test')
+dummy_x, dummy_y = next(iter(train_loader))
+writer.add_graph(model, dummy_x.unsqueeze(1).to(device))

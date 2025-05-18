@@ -6,6 +6,7 @@ dependencies = [
   "ipykernel>=6.29.5",
   "matplotlib>=3.10.1",
   "scikit-learn>=1.6.1",
+  "tensorboard>=2.19.0",
   "torch>=2.7.0",
   "torchvision>=0.22.0",
   "torchviz>=0.0.3",
