@@ -18,8 +18,6 @@ class Custom_dataset(Dataset):
 w = 0.5
 b = 1.2
 
-# print("real params", b, w)
-
 # x = torch.linspace(0, 1, 100).to(device)
 # this time not sending to gpu as we don't want to load the whole data in gpu memory
 x = torch.linspace(0, 1, 100)
