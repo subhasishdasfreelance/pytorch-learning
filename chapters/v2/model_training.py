@@ -23,3 +23,13 @@ plot_losses({
   "train loss": train_losses,
   "validation loss": validation_losses
 })
+
+checkpoint = {
+  "model_state_dict": model.state_dict(),
+  "optimizer_state_dict": optimizer.state_dict(),
+  "train_losses": train_losses,
+  "validation_losses": validation_losses,
+  "epochs": epochs
+}
+
+torch.save(checkpoint, f'model_checkpoint{version}.pth')
