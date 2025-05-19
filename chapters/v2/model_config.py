@@ -16,3 +16,7 @@ loss_fn = nn.MSELoss(reduction="mean")
 optimizer = optim.Adam(model.parameters(), lr=lr)
 train_fn = make_train_step(model, loss_fn, optimizer)
 validation_fn = make_validation_step(model, loss_fn, optimizer)
+
+# in terminal write "tensorboard --logdir="chapters/runs"" to run tensorboard
+dummy_x, dummy_y = next(iter(train_loader))
+writer.add_graph(model, dummy_x.unsqueeze(1).to(device))

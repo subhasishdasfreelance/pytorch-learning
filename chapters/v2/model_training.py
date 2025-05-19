@@ -10,18 +10,16 @@ for epoch in range(epochs):
     train_losses.append(train_loss)
     validation_losses.append(validation_loss)
 
+  writer.add_scalars(global_step=epoch, main_tag="loss", tag_scalar_dict={
+    "training": train_loss,
+    "validation": validation_loss
+  })
+
+writer.close()
+
 print(model.state_dict())
 
 plot_losses({
   "train loss": train_losses,
   "validation loss": validation_losses
-})
-
-# in terminal write "tensorboard --logdir="chapters/runs"" to run tensorboard
-writer = SummaryWriter(log_dir='runs/test')
-# dummy_x, dummy_y = next(iter(train_loader))
-# writer.add_graph(model, dummy_x.unsqueeze(1).to(device))
-writer.add_scalars(global_step=epoch, main_tag="loss", tag_scalar_dict={
-  "training": train_losses.unsqueeze(1),
-  "validation": validation_loss.unsqueeze(1)
 })
