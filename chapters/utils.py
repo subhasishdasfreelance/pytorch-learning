@@ -1,38 +1,48 @@
-__all__ = ["make_train_step", "make_validation_step", "mini_batch", "plot_losses"]
+__all__ = ["_make_train_step", "_make_val_step", "_mini_batch", "plot_losses"]
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 
-def make_train_step(model, loss_fn, optimizer):
+def _make_train_step(self):
     def train_fn(x, y):
-        model.train()
-        prediction = model(x.unsqueeze(1))
-        loss = loss_fn(prediction, y.unsqueeze(1))
-        optimizer.zero_grad()
+        self.model.train()
+        prediction = self.model(x.unsqueeze(1))
+        loss = self.loss_fn(prediction, y.unsqueeze(1))
+        self.optimizer.zero_grad()
         loss.backward()
-        optimizer.step()
+        self.optimizer.step()
         return loss.item()
 
     return train_fn
 
 
-def make_validation_step(model, loss_fn, optimizer):
-    def validation_fn(x, y):
-        model.eval()
-        prediction = model(x.unsqueeze(1))
-        loss = loss_fn(prediction, y.unsqueeze(1))
+def _make_val_step(self):
+    def val_fn(x, y):
+        self.model.eval()
+        prediction = self.model(x.unsqueeze(1))
+        loss = self.loss_fn(prediction, y.unsqueeze(1))
         return loss.item()
 
-    return validation_fn
+    return val_fn
 
 
-def mini_batch(device, dataloader, step_fn):
+def _mini_batch(self, validation=False):
+    if validation:
+        dataloader = self.val_loader
+        step_fn = self.val_step_fn
+    else:
+        dataloader = self.train_loader
+        step_fn = self.train_step_fn
+
+    if dataloader is None:
+        return None
+
     mini_batch_losses = []
 
     for x_batch, y_batch in dataloader:
-        x_batch = x_batch.to(device)
-        y_batch = y_batch.to(device)
+        x_batch = x_batch.to(self.device)
+        y_batch = y_batch.to(self.device)
 
         mini_batch_loss = step_fn(x_batch, y_batch)
         mini_batch_losses.append(mini_batch_loss)
