@@ -6,12 +6,12 @@ from torch.utils.data import Dataset, DataLoader, random_split
 import os
 import sys
 import datetime
+import matplotlib.pyplot as plt
 
 writer = SummaryWriter(log_dir="runs/test")
-import numpy as np
 
 
-class step_by_step(object):
+class model_trainer(object):
     def __init__(self, model, loss_fn, optimizer):
         self.model = model
         self.loss_fn = loss_fn
@@ -67,7 +67,7 @@ class step_by_step(object):
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
         torch.manual_seed(seed)
-        np.random.seed(seed)
+        torch.cuda.manual_seed(seed)
 
     def _mini_batch(self, validation=False):
         if validation:
@@ -89,14 +89,15 @@ class step_by_step(object):
             mini_batch_loss = step_fn(x_batch, y_batch)
             mini_batch_losses.append(mini_batch_loss)
 
-        loss = np.mean(mini_batch_losses)
+        # loss = np.mean(mini_batch_losses)
+        loss = sum(mini_batch_losses) / len(mini_batch_losses)
         return loss
 
-    def train(self, epochs, seed):
-        self.set_seed(seed)
+    def train(self, epochs, seed=None):
+        self.set_seed(seed if seed is not None else 42)
 
         for epoch in range(epochs):
-            self.total_epochs += 1
+            self.epochs += 1
 
             train_loss = self._mini_batch(validation=False)
             self.train_losses.append(train_loss)
@@ -106,12 +107,60 @@ class step_by_step(object):
                 self.val_losses.append(val_loss)
 
             if self.writer:
+                scalars = {"training": train_loss}
+
+                if val_loss is not None:
+                    scalars.update({"validation": val_loss})
                 self.writer.add_scalars(
-                    global_step=epoch,
-                    main_tag="loss",
-                    tag_scalar_dict={
-                        "training": train_loss,
-                        "validation": validation_loss,
-                    },
+                    main_tag="loss", tag_scalar_dict=scalars, global_step=epoch
                 )
-# the train function is incomplete and leaving in the middle
+
+        if self.writer:
+            self.writer.flush()
+
+    def save_checkpoint(self, filename):
+        checkpoint = {
+            "epoch": self.epochs,
+            "model_state_dict": self.model.state_dict(),
+            "optimizer_state_dict": self.optimizer.state_dict(),
+            "train_loss": self.train_losses,
+            "val_loss": self.val_losses,
+        }
+        torch.save(checkpoint, filename)
+
+    def load_checkpoint(self, filename):
+        checkpoint = torch.load(filename, weights_only=False)
+        self.model.load_state_dict(checkpoint["model_state_dict"])
+        self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        self.train_losses = checkpoint["train_losses"]
+        self.val_losses = checkpoint["val_losses"]
+        self.epochs = checkpoint["epochs"]
+        self.model.train()
+
+    def predict(self, x):
+        self.model.eval()
+        prediction = self.model(x)
+        self.model.train()
+        return prediction
+
+    def plot_losses(self):
+        plt.figure(figsize=(10, 4))
+        losses_dict = {
+            "train loss": self.train_losses,
+            "validation loss": self.val_losses,
+        }
+
+        for label, losses in losses_dict.items():
+            plt.plot(losses, label=label)
+
+        plt.xlabel("Epoch")
+        plt.ylabel("Loss")
+        plt.title("Loss Curve")
+        plt.legend()
+        plt.grid(True)
+        plt.show()
+
+    def add_graph(self):
+        if self.train_loader and self.writer:
+            x_dummy, y_dummy = next(iter(self.train_loader))
+            self.writer.add_graph(self.model, x_dummy.to(self.device))
